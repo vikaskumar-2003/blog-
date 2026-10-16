@@ -5,6 +5,13 @@ dotenv.config({
 import express from "express";
 import { connectDb } from "./utils/db.js";
 import userRoutes from "./routes/user.js";
+import { v2 as cloudinary } from "cloudinary";
+cloudinary.config({
+    secure: true,
+    cloud_name: process.env.CLOUD_NAME,
+    api_key: process.env.CLOUD_API_KEY,
+    api_secret: process.env.CLOUD_API_SECERT
+});
 const app = express();
 const PORT = process.env.PORT || 5000;
 connectDb();

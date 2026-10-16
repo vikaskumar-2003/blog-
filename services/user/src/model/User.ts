@@ -1,5 +1,5 @@
 
-import mongoose, { Schema } from "mongoose";
+import mongoose, { Schema,type Document } from "mongoose";
 
 export interface IUser extends Document{
     name:string,
@@ -8,7 +8,8 @@ export interface IUser extends Document{
     instagram:string,
     facebook:string,
     linkedin:string,
-    bio:string
+    bio:string,
+   
 }
 
 

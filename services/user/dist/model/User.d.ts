@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { type Document } from "mongoose";
 export interface IUser extends Document {
     name: string;
     email: string;
@@ -8,15 +8,15 @@ export interface IUser extends Document {
     linkedin: string;
     bio: string;
 }
-export declare const User: mongoose.Model<IUser, {}, {}, {}, mongoose.Document<unknown, {}, IUser, {}, mongoose.DefaultSchemaOptions> & IUser & {
+export declare const User: mongoose.Model<IUser, {}, {}, {}, Document<unknown, {}, IUser, {}, mongoose.DefaultSchemaOptions> & IUser & Required<{
     _id: mongoose.Types.ObjectId;
-} & {
+}> & {
     __v: number;
 } & {
     id: string;
-}, any, IUser & {
+}, any, IUser & Required<{
     _id: mongoose.Types.ObjectId;
-} & {
+}> & {
     __v: number;
 }>;
 //# sourceMappingURL=User.d.ts.map
