@@ -4,6 +4,7 @@ import type { AuthenticatedRequest } from "../middlewares/isAuth.js";
 import getBuffer from "../utils/dataUri.js";
 import cloudinary from "cloudinary";
 import { sql } from "../utils/db.js";
+import { invalidateChacheJob } from "../utils/rabbitmq.js";
 
 export const createBlog = TryCatch(
   async (req: AuthenticatedRequest, res: Response) => {
@@ -36,6 +37,9 @@ export const createBlog = TryCatch(
       await sql`INSERT INTO blogs (title,description,image,blogcontent,category,author) VALUES(${title},${description},${cloud.secure_url},${blogcontent},${category},${req.user?._id})
        RETURNING *
     `;
+
+    await invalidateChacheJob(["blogs:*"])
+
     res.json({
       message: "blog created ",
       blog: result[0],

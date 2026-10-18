@@ -6,6 +6,7 @@ import express from "express"
 import { connectDb } from "./utils/db.js"
 import userRoutes from "./routes/user.js"
 import {v2 as cloudinary} from "cloudinary"
+import cors from "cors"
 
 cloudinary.config({
   secure: true,
@@ -22,7 +23,7 @@ const PORT=process.env.PORT || 5000
 connectDb()
 
 app.use(express.json())
-
+app.use(cors())
 app.use("/api/v1/",userRoutes)
 
 app.listen(PORT,()=>{

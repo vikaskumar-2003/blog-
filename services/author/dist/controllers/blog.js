@@ -2,6 +2,7 @@ import TryCatch from "../utils/TryCatch.js";
 import getBuffer from "../utils/dataUri.js";
 import cloudinary from "cloudinary";
 import { sql } from "../utils/db.js";
+import { invalidateChacheJob } from "../utils/rabbitmq.js";
 export const createBlog = TryCatch(async (req, res) => {
     const { title, description, blogcontent, category } = req.body;
     console.log("body body", req.body);
@@ -24,6 +25,7 @@ export const createBlog = TryCatch(async (req, res) => {
     const result = await sql `INSERT INTO blogs (title,description,image,blogcontent,category,author) VALUES(${title},${description},${cloud.secure_url},${blogcontent},${category},${req.user?._id})
        RETURNING *
     `;
+    await invalidateChacheJob(["blogs:*"]);
     res.json({
         message: "blog created ",
         blog: result[0],

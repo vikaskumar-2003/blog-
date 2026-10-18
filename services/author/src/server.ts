@@ -5,12 +5,16 @@ dotenv.config({ quiet: true });
 import express from "express";
 import { sql } from "./utils/db.js";
 import blogRoutes from "./routes/blog.js";
+import { connectRabbitMQ } from "./utils/rabbitmq.js";
 
 
 
 
 
 const app = express();
+
+connectRabbitMQ()
+
 
 cloudinary.config({
   secure: true,
