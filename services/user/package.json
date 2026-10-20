@@ -28,6 +28,7 @@
     "datauri": "^4.1.0",
     "dotenv": "^18.0.6",
     "express": "^5.2.1",
+    "googleapis": "^186.0.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.11.1",
     "multer": "^2.4.0",
