@@ -5,6 +5,8 @@ import getBuffer from "../utils/dataUri.js";
 import cloudinary from "cloudinary";
 import { sql } from "../utils/db.js";
 import { invalidateChacheJob } from "../utils/rabbitmq.js";
+import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export const createBlog = TryCatch(
   async (req: AuthenticatedRequest, res: Response) => {
@@ -38,7 +40,7 @@ export const createBlog = TryCatch(
        RETURNING *
     `;
 
-    await invalidateChacheJob(["blogs:*"])
+    await invalidateChacheJob(["blogs:*"]);
 
     res.json({
       message: "blog created ",
@@ -130,4 +132,172 @@ export const deletedBlog = TryCatch(async (req: AuthenticatedRequest, res) => {
   res.json({
     message: "blog delete",
   });
+});
+
+export const aiTitleResponse = TryCatch(async (req, res) => {
+  try {
+    const { text } = req.body;
+
+    const prompt = `Correct the grammar of the following blog title and return only the corrected
+title without any additional text, formatting, or symbols: "${text}"`;
+
+    let result;
+    const ai = new GoogleGenAI({
+      apiKey: process.env.GEMINI_API_KEY as string,
+    });
+
+    async function main() {
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: prompt,
+      });
+
+      let rawText = response.text;
+
+      if (!rawText) {
+        return res.status(400).json({
+          message: "something went wrong",
+        });
+      }
+
+      result = rawText
+        .replace(/\*\*/g, "")
+        .replace(/[\r\n]+/g, "")
+        .replace(/[*_`~]/g, "")
+        .trim();
+    }
+
+    await main();
+
+    res.json(result);
+  } catch (error: any) {
+    console.log(error);
+    return res.status(500).json({
+      message: error.message,
+    });
+  }
+});
+
+export const aiDescriptionResponse = TryCatch(async (req, res) => {
+  try {
+    const { title, description } = req.body;
+
+    const prompt =
+      description === ""
+        ? `Generate only one short blog description based on
+this title: "${title}". Your response must be only one sentence, strictly under 30 words, with no options, no
+greetings, and no extra text. Do not explain. Do not say 'here is'. Just return the description only.`
+        : `Fix the
+grammar in the following blog description and return only the corrected sentence. Do not add anything else:
+"${description}"`;
+
+    let result;
+    const ai = new GoogleGenAI({
+      apiKey: process.env.GEMINI_API_KEY as string,
+    });
+
+    async function main() {
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: prompt,
+      });
+
+      let rawText = response.text;
+
+      if (!rawText) {
+        return res.status(400).json({
+          message: "something went wrong",
+        });
+      }
+
+      result = rawText
+        .replace(/\*\*/g, "")
+        .replace(/[\r\n]+/g, "")
+        .replace(/[*_`~]/g, "")
+        .trim();
+    }
+
+    await main();
+
+    res.json(result);
+  } catch (error: any) {
+    console.log(error);
+    return res.status(500).json({
+      message: error.message,
+    });
+  }
+});
+
+
+export const aiBlogResponse = TryCatch(async (req, res) => {
+
+  try {
+    
+   
+  const { blog } = req.body;
+
+  if (!blog) {
+    return res.status(400).json({
+      message: "Please provide blog",
+    });
+  }
+
+  const prompt = `
+You are a grammar correction engine.
+
+I will provide blog content in rich HTML format from Jodit Editor.
+
+Rules:
+1. Correct only grammar, spelling, and punctuation.
+2. Do not add new ideas or rewrite the content unnecessarily.
+3. Preserve all HTML tags, attributes, inline styles, images, links,
+   line breaks, and document structure.
+4. Do not remove or modify valid HTML attributes.
+5. Return only the complete corrected HTML.
+6. Do not include Markdown code fences or explanations.
+`;
+
+  const fullMessage = `${prompt}\n\n${blog}`;
+
+  const ai = new GoogleGenerativeAI(
+    process.env.GEMINI_API_KEY as string
+  );
+
+  const model = ai.getGenerativeModel({
+    model: "gemini-3.8-flash",
+  });
+
+  const result = await model.generateContent({
+    contents: [
+      {
+        role: "user",
+        parts: [{ text: fullMessage }],
+      },
+    ],
+  });
+
+  const responseText = await result.response.text();
+
+  // Remove Markdown code fences only if present.
+  const cleanedHtml = responseText
+    .trim()
+    .replace(/^```(?:html)?\s*/i, "")
+    .replace(/\s*```$/, "")
+    .trim();
+
+
+  console.log(cleanedHtml);
+  
+
+  return res.status(200).json({
+    html: cleanedHtml,
+  });
+
+
+  } catch (error:any) {
+    console.log(error);
+     return res.status(200).json({
+    message:error.message
+  });
+  }
 });

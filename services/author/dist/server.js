@@ -5,6 +5,7 @@ import express from "express";
 import { sql } from "./utils/db.js";
 import blogRoutes from "./routes/blog.js";
 import { connectRabbitMQ } from "./utils/rabbitmq.js";
+import cors from "cors";
 const app = express();
 connectRabbitMQ();
 cloudinary.config({
@@ -50,6 +51,7 @@ async function initDB() {
     }
 }
 app.use(express.json());
+app.use(cors());
 app.use("/api/v1", blogRoutes);
 initDB().then(() => {
     app.listen(PORT, () => {
