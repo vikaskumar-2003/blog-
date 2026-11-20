@@ -3,7 +3,7 @@
 import { createContext, ReactNode, useContext, useEffect, useState } from "react";
 import Cookies from "js-cookie";
 import axios from "axios";
-import { Toaster } from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast";
 import {GoogleOAuthProvider} from "@react-oauth/google"
 
 export const user_service = "http://localhost:5000";
@@ -32,6 +32,14 @@ export interface Blog {
   bio: string;
   author: string;
   created_at: string;
+ 
+}
+
+interface SavedBlogType{
+  id:string,
+  userid:string,
+  blogid:string,
+  created_at:string
 }
 
 interface AppContextType {
@@ -41,6 +49,15 @@ interface AppContextType {
   setLoading:React.Dispatch<React.SetStateAction<boolean>>
     setIsAuth:React.Dispatch<React.SetStateAction<boolean>>
      setUser:React.Dispatch<React.SetStateAction<User | null>>
+     logoutUser:()=>Promise<void>
+     blogs:Blog[]|null
+     blogLoading:boolean
+     setSearchQuery:React.Dispatch<React.SetStateAction<string>>
+     searchQuery:string
+     setCategory:React.Dispatch<React.SetStateAction<string>>
+      fetchBlogs:()=>Promise<void>
+      savedBlogs:SavedBlogType[]|null
+      getSavedBlogs:()=>Promise<void>
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -53,6 +70,35 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User |null>(null);
   const [isAuth, setIsAuth] = useState(false);
   const [loading, setLoading] = useState(true);
+  const[category,setCategory]=useState("")
+  const[searchQuery,setSearchQuery]=useState("")
+
+ const[savedBlogs,setSavedBlogs]=useState<SavedBlogType[]| null>(null)
+
+ async function getSavedBlogs(){
+  const token=Cookies.get("token")
+  try {
+    const{data}=await axios.get(`${blog_service}/api/v1/blog/saved/all`,{
+      headers:{
+        Authorization:`Bearer ${token}`
+      }
+    })
+ 
+    setSavedBlogs(data)
+
+  } catch (error) {
+    console.log(error);
+    
+  }
+ }
+
+
+ async function logoutUser(){
+ Cookies.remove("token")
+ setUser(null)
+ setIsAuth(false)
+ toast.success("user logged in")
+ }
 
   async function fetchUser() {
     try {
@@ -82,14 +128,49 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   }
   }
 
+
+ const[blogLoading,setBlogLoading]=useState(true)
+const[blogs,setBlogs]=useState<Blog[]|null>(null)
+
+
+  async function fetchBlogs(){
+   
+    setBlogLoading(true)
+
+
+     try {
+      const{data}=await axios.get(`${blog_service}/api/v1/blog/all?searchQuery=${searchQuery}&category=${category}`)
+  
+      setBlogs(data)
+console.log(data);
+
+
+     } catch (error:any) {
+      console.log(error.message);
+      
+     }
+     finally{
+      setBlogLoading(false)
+     }
+
+
+  }
+
   useEffect(()=>{
   
-fetchUser()
 
+ fetchUser()
+ getSavedBlogs()
 
   },[])
 
-  return <AppContext.Provider value={{ user,setUser,isAuth, loading ,setIsAuth,setLoading}}>
+  useEffect(()=>{
+ fetchBlogs()
+  },[category])
+
+ 
+
+  return <AppContext.Provider value={{ user,setUser,isAuth, loading ,setIsAuth,setLoading,logoutUser,blogLoading,blogs,setCategory,setSearchQuery,searchQuery,fetchBlogs,savedBlogs,getSavedBlogs}}>
      <GoogleOAuthProvider clientId="688540549996-ga8jnb0h66l9bp9u7i7r7bhjj8nu7iut.apps.googleusercontent.com">
         {children} <Toaster/> 
      </GoogleOAuthProvider>

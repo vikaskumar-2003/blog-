@@ -61,6 +61,8 @@ export const getSingleBlog = TryCatch(async (req, res) => {
   }
 
   const blog = await sql`SELECT * FROM blogs WHERE id =${blogId}`;
+  console.log("USER SERVICE:", process.env.USER_SERVICE);
+console.log("AUTHOR ID:", blog[0]?.author);
 
   if (blog.length === 0) {
     res.status(404).json({
@@ -126,7 +128,7 @@ export const saveBlog=TryCatch(async(req:AuthenticatedRequest,res)=>{
   const{blogid}=req.params
   const userid=req.user?._id
 
-  if (!blogid&&!userid) {
+  if (!blogid||!userid) {
    return res.status(400).json({
       message:"Missing blog id or userid"
     })
@@ -154,7 +156,7 @@ return
 })
 
 export const getSavedBlog=TryCatch(async(req:AuthenticatedRequest,res)=>{
-  const blogs=await sql`SELECT * FROM savedblogs WHERE userid=${req.user?._id}`
+  const blogs=await sql`SELECT * FROM savedblog WHERE userid=${req.user?._id}`
  
   res.json(blogs)
 

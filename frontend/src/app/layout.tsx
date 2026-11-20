@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/ui/navbar";
 import { AppProvider } from "@/context/AppContext";
+import { SidebarProvider } from "@/components/ui/sidebar";
 
 
 
@@ -19,7 +20,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col">
         <AppProvider>
-             <Navbar/>{children}
+             <Navbar/>
+             
+                {children}
+             
+           
         </AppProvider>
      </body>
     </html>
